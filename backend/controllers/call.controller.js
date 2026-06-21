@@ -17,6 +17,8 @@ import {
 import { startWorkerForCall, stopWorker } from "../services/workerLauncher.js";
 import { resolveRouteByDid } from "../services/callRoute.service.js";
 import { startWorkerForRoom } from "../services/workerLauncher.js";
+import { upsertLeadOutcome } from "../services/leadOutcome.service.js";
+import { roomNameFromSessionId } from "../utils/sessionId.util.js";
 import axios from "axios";
 import { logInfo, logWarn, logError } from "../utils/logging.util.js";
 import {
@@ -301,7 +303,7 @@ export const startSipCall = async (req, res) => {
 
     // Step 1: Generate session
     const finalSessionId = sessionId || `sip-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    const generatedRoomName = `room-${finalSessionId.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 50)}`;
+    const generatedRoomName = roomNameFromSessionId(finalSessionId);
     const roomName = resolveTargetRoomName(generatedRoomName);
 
     console.log("[sip-call] starting unified call", {
@@ -325,13 +327,33 @@ export const startSipCall = async (req, res) => {
         ...(callConfig && typeof callConfig === "object" ? callConfig : {}),
         objective: callObjective || callConfig?.objective || "",
       },
+      { sessionId: finalSessionId },
     );
+
+    void upsertLeadOutcome({
+      tenantId,
+      agentId,
+      sessionId: finalSessionId,
+      roomName,
+      objective: callObjective || callConfig?.objective || "custom",
+      stage: "connecting",
+      leadStatus: "new",
+      collectedData: {},
+      summary: "Call connecting",
+      isClosed: false,
+      turnCount: 0,
+      lastUserMessage: "",
+      lastAssistantMessage: "",
+    }).catch((error) => {
+      console.warn("[lead] initial outcome upsert failed:", error?.message || error);
+    });
 
     // Step 3: Start worker
     try {
       startWorkerForRoom(roomName, {
         tenantId,
         agentId,
+        sessionId: finalSessionId,
         callObjective: callObjective || callConfig?.objective || "",
         callConfig: callConfig && typeof callConfig === "object" ? callConfig : null,
       });
@@ -604,7 +626,7 @@ export const initiateSipCall = async (req, res) => {
     }
 
     // Retrieve session
-    const resolvedInputRoom = roomName || `room-${sessionId.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 50)}`;
+    const resolvedInputRoom = roomName || roomNameFromSessionId(sessionId);
     const finalRoomName = resolveTargetRoomName(resolvedInputRoom);
     const session = getSipSession(finalRoomName);
 
@@ -626,6 +648,7 @@ export const initiateSipCall = async (req, res) => {
     startWorkerForRoom(finalRoomName, {
       tenantId: session.tenantId,
       agentId: session.agentId,
+      sessionId: sessionId || session.sessionId || "",
     });
 
     return res.status(200).json({

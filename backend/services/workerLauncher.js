@@ -3,9 +3,10 @@ import path from "node:path";
 
 const workers = new Map();
 
-const buildWorkerMetadata = ({ roomName, callObjective, callConfig } = {}) => {
+const buildWorkerMetadata = ({ roomName, callObjective, callConfig, sessionId } = {}) => {
   const metadata = {
     roomName: roomName || "",
+    sessionId: sessionId || "",
     callObjective: callObjective || "",
     callConfig:
       callConfig && typeof callConfig === "object"
@@ -14,7 +15,8 @@ const buildWorkerMetadata = ({ roomName, callObjective, callConfig } = {}) => {
   };
 
   const hasMetadata = Boolean(
-    metadata.callObjective ||
+    metadata.sessionId ||
+      metadata.callObjective ||
       (metadata.callConfig && Object.keys(metadata.callConfig).length > 0),
   );
 
@@ -69,6 +71,7 @@ export const startWorkerForRoom = (roomName, options = {}) => {
   const {
     tenantId,
     agentId,
+    sessionId = "",
     callObjective = "",
     callConfig = null,
   } = options;
@@ -83,6 +86,7 @@ export const startWorkerForRoom = (roomName, options = {}) => {
 
   const workerMetadata = buildWorkerMetadata({
     roomName,
+    sessionId,
     callObjective,
     callConfig,
   });

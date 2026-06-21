@@ -2,6 +2,8 @@ import axios from "axios";
 import { createSipSession } from "./sipSession.service.js";
 import { createOutboundSipParticipant } from "./livekitSip.service.js";
 import { startWorkerForRoom } from "./workerLauncher.js";
+import { upsertLeadOutcome } from "./leadOutcome.service.js";
+import { roomNameFromSessionId } from "../utils/sessionId.util.js";
 import {
   assertTenantCanStartCall,
   incrementTenantCallUsage,
@@ -68,7 +70,7 @@ export async function executeOutboundCall({
   await assertTenantCanStartCall(tenantId);
 
   const finalSessionId = `sip-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  const generatedRoomName = `room-${finalSessionId.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 50)}`;
+  const generatedRoomName = roomNameFromSessionId(finalSessionId);
   const roomName = resolveTargetRoomName(generatedRoomName);
 
   const mergedConfig = {
@@ -82,12 +84,31 @@ export async function executeOutboundCall({
     agentId,
     receiverNumber,
     mergedConfig,
-    sessionMeta,
+    { ...sessionMeta, sessionId: finalSessionId },
   );
+
+  void upsertLeadOutcome({
+    tenantId,
+    agentId,
+    sessionId: finalSessionId,
+    roomName,
+    objective: mergedConfig.objective || "custom",
+    stage: "connecting",
+    leadStatus: "new",
+    collectedData: {},
+    summary: "Call connecting",
+    isClosed: false,
+    turnCount: 0,
+    lastUserMessage: "",
+    lastAssistantMessage: "",
+  }).catch((error) => {
+    console.warn("[lead] initial outcome upsert failed:", error?.message || error);
+  });
 
   startWorkerForRoom(roomName, {
     tenantId,
     agentId,
+    sessionId: finalSessionId,
     callObjective: mergedConfig.objective,
     callConfig: mergedConfig,
   });

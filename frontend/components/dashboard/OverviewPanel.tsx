@@ -117,6 +117,7 @@ export function OverviewPanel() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [usage, setUsage] = useState<TenantUsage | null>(null);
   const [analytics, setAnalytics] = useState<TenantAnalyticsSummary | null>(null);
+  const [agentCount, setAgentCount] = useState(0);
   const [platformNumber, setPlatformNumber] = useState("—");
   // A workspace is unusable if the stored id is stale/invalid (the legacy
   // "tenant_demo" case) and fails to load.
@@ -146,6 +147,15 @@ export function OverviewPanel() {
       })
       .catch(() => {
         if (!cancelled) setAnalytics(null);
+      });
+
+    api
+      .listAgents(tenantId)
+      .then((response) => {
+        if (!cancelled) setAgentCount(response.data?.length ?? 0);
+      })
+      .catch(() => {
+        if (!cancelled) setAgentCount(0);
       });
     return () => {
       cancelled = true;
@@ -187,7 +197,11 @@ export function OverviewPanel() {
 
   const callsUsed = usage?.usage?.callsUsed ?? 0;
   const callsMax = usage?.usageLimits?.maxCallsPerMonth ?? 0;
-  const agentsUsed = usage?.usage?.agentsUsed ?? 0;
+  const agentsUsed = Math.max(
+    usage?.usage?.agentsUsed ?? 0,
+    analytics?.activeAgents ?? 0,
+    agentCount,
+  );
   const agentsMax = usage?.usageLimits?.maxAgents ?? 0;
   const callsPct = callsMax > 0 ? Math.min(100, Math.round((callsUsed / callsMax) * 100)) : 0;
   const agentsPct = agentsMax > 0 ? Math.min(100, Math.round((agentsUsed / agentsMax) * 100)) : 0;

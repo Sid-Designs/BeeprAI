@@ -6,8 +6,10 @@ import {
 import { fetchKbGapClusterReport } from "../services/insights/kbGapClustering.service.js";
 import {
   formatLiveCallStatus,
+  getLeadOutcomeByRoomName,
   getLeadOutcomeBySessionId,
 } from "../services/leadOutcome.service.js";
+import { roomNameFromSessionId } from "../utils/sessionId.util.js";
 import { assertTenantAccess } from "../services/tenantAccess.service.js";
 import { getTenantAnalyticsSummary } from "../services/tenantAnalytics.service.js";
 import { formatCallInsights } from "../services/insights/callInsightFormatter.service.js";
@@ -143,7 +145,10 @@ export const getLiveCallStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: "sessionId is required" });
     }
 
-    const record = await getLeadOutcomeBySessionId(sessionId);
+    let record = await getLeadOutcomeBySessionId(sessionId);
+    if (!record) {
+      record = await getLeadOutcomeByRoomName(roomNameFromSessionId(sessionId));
+    }
     if (!record) {
       return res.status(404).json({ success: false, message: "Live call status not found" });
     }

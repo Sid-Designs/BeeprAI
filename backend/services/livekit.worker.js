@@ -887,7 +887,13 @@ const createTTSPlayback = async (room, wavBuffer) => {
 };
 
 export const startLiveKitWorker = async (roomName, options = {}) => {
-  const { tenantId, agentId, callObjective = "", callConfig = null } = options;
+  const {
+    tenantId,
+    agentId,
+    sessionId: optionSessionId = "",
+    callObjective = "",
+    callConfig = null,
+  } = options;
   const languageConfig = resolveLanguageConfig(callConfig || {});
 
   const debugStt = String(process.env.DEBUG_STT || "").toLowerCase() === "true";
@@ -976,7 +982,7 @@ export const startLiveKitWorker = async (roomName, options = {}) => {
     userSpeaking: false,
     userSpeechStartedAt: 0,
 
-    sessionId: null,
+    sessionId: normalizeText(optionSessionId) || null,
     analyticsKey: `${roomName}:${tenantId || "unknown"}:${agentId || "unknown"}`,
     conversationHistory: [],
     conversationState: getInitialConversationState(),
@@ -3252,9 +3258,6 @@ export const startLiveKitWorker = async (roomName, options = {}) => {
     state.activeParticipantIdentity = participant.identity;
     state.activeAudioTrack = track;
     state.activeAudioPublication = publication;
-    if (!state.initialGreetingSent) {
-      state.sessionId = null;
-    }
     state.greetingWaitLogged = false;
     state.sttWaitLogged = false;
 

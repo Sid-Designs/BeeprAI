@@ -82,6 +82,11 @@ export const getLeadOutcomeBySessionId = async (sessionId) => {
   return LeadOutcome.findOne({ sessionId }).lean();
 };
 
+export const getLeadOutcomeByRoomName = async (roomName) => {
+  if (!roomName) return null;
+  return LeadOutcome.findOne({ roomName }).lean();
+};
+
 /** Tenant-safe payload for in-progress call polling (Phase C3). */
 export const formatLiveCallStatus = (record) => {
   if (!record) return null;

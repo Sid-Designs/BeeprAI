@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import CallAnalysis from "../models/callAnalysis.model.js";
+import LeadOutcome from "../models/leadOutcome.model.js";
 import Agent from "../models/agent.model.js";
 import KnowledgeBase from "../models/knowledgeBase.model.js";
 
@@ -44,7 +45,12 @@ export async function getTenantAnalyticsSummary(tenantId) {
     .lean();
 
   const todayStart = startOfDay();
-  const callsToday = calls.filter((call) => new Date(call.createdAt) >= todayStart).length;
+  const analyzedCallsToday = calls.filter((call) => new Date(call.createdAt) >= todayStart).length;
+  const liveCallsToday = await LeadOutcome.countDocuments({
+    tenantId: tenantOid,
+    createdAt: { $gte: todayStart },
+  });
+  const callsToday = Math.max(analyzedCallsToday, liveCallsToday);
 
   const successfulCalls = calls.filter((call) => SUCCESS_OUTCOMES.has(call.outcome)).length;
   const successRate =
@@ -94,7 +100,10 @@ export async function getTenantAnalyticsSummary(tenantId) {
   const maxDaily = Math.max(...dailyVolume.map((d) => d.count), 1);
   const dailyBarHeights = dailyVolume.map((d) => Math.round((d.count / maxDaily) * 100));
 
-  const activeAgents = await Agent.countDocuments({ tenantId: tenantOid, isActive: true });
+  const activeAgents = await Agent.countDocuments({
+    tenantId: tenantOid,
+    isActive: { $ne: false },
+  });
   const knowledgeDocIds = await KnowledgeBase.distinct("docId", { tenantId: tenantOid });
 
   return {

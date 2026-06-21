@@ -11,6 +11,9 @@ export const createSipSession = (roomName, tenantId, agentId, did, callConfig = 
 
   if (sessions.has(room)) {
     const existing = sessions.get(room);
+    if (meta?.sessionId) {
+      existing.sessionId = meta.sessionId;
+    }
     if (callConfig && typeof callConfig === "object") {
       existing.callConfig = { ...(existing.callConfig || {}), ...callConfig };
     }
@@ -22,6 +25,7 @@ export const createSipSession = (roomName, tenantId, agentId, did, callConfig = 
 
   const session = {
     roomName: room,
+    sessionId: meta?.sessionId || null,
     tenantId,
     agentId,
     did,

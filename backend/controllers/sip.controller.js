@@ -340,11 +340,13 @@ export const handleLiveKitSipWebhook = async (req, res) => {
         agentId,
         toNorm,
         existingSession?.callConfig || null,
+        existingSession?.sessionId ? { sessionId: existingSession.sessionId } : null,
       );
 
       startWorkerForRoom(roomName, {
         tenantId,
         agentId,
+        sessionId: existingSession?.sessionId || session?.sessionId || "",
         callObjective: session?.callConfig?.objective || "",
         callConfig: session?.callConfig || null,
       });

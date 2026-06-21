@@ -29,6 +29,7 @@ import {
   shouldEndAfterRepeatedThanks,
 } from "../services/callPolicy.service.js";
 import { upsertLeadOutcome } from "../services/leadOutcome.service.js";
+import { sessionIdFromRoomName } from "../utils/sessionId.util.js";
 import { runPostCallAnalysis } from "../services/postCall/postCallAnalysis.service.js";
 import { applyConversationStyle } from "../services/conversationStyle.service.js";
 import {
@@ -657,7 +658,8 @@ export const handleQuery = async (req, res) => {
       });
     }
 
-    const sessionId = incomingSessionId || uuidv4();
+    const sessionId =
+      incomingSessionId || sessionIdFromRoomName(roomName) || uuidv4();
     await ensureSessionHydrated(sessionId);
     const tenant = await Tenant.findById(tenantId).lean();
     if (!tenant) {

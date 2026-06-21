@@ -78,7 +78,7 @@ export async function addContacts(req, res) {
   let parsed = Array.isArray(contacts) ? contacts : [];
 
   if (manualText) {
-    parsed = [...parsed, ...parseContactsFromManualText(manualText)];
+    parsed = [...parsed, ...(await parseContactsFromManualText(manualText))];
   }
 
   const result = await addContactsToCampaign(campaign._id, parsed);

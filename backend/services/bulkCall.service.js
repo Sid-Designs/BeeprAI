@@ -25,6 +25,25 @@ function normalizePhone(raw = "") {
   return digits.length >= 8 ? digits : "";
 }
 
+function parseContactSegment(segment = "") {
+  const text = String(segment).trim();
+  if (!text) return null;
+
+  const phoneMatch = text.match(PHONE_RE);
+  if (!phoneMatch) return null;
+
+  const phone = normalizePhone(phoneMatch[0]);
+  if (!phone) return null;
+
+  const name = text
+    .slice(phoneMatch.index + phoneMatch[0].length)
+    .replace(/^[\s,;|\-–]+|[\s,;|\-–]+$/g, "")
+    .trim()
+    .slice(0, 120);
+
+  return { name, phoneNumber: phone };
+}
+
 function parseManualContacts(text = "") {
   const lines = String(text)
     .split(/\r?\n/)
@@ -33,15 +52,22 @@ function parseManualContacts(text = "") {
 
   const contacts = [];
   for (const line of lines) {
-    const parts = line.split(/[,;|]/).map((p) => p.trim()).filter(Boolean);
-    if (parts.length >= 2 && !PHONE_RE.test(parts[0])) {
-      const phone = normalizePhone(parts.find((p) => PHONE_RE.test(p)) || parts[1]);
-      const name = parts.find((p) => p !== phone && !PHONE_RE.test(p)) || "";
-      if (phone) contacts.push({ name, phoneNumber: phone });
+    const segments = line.split(/[,;|]/).map((p) => p.trim()).filter(Boolean);
+
+    if (segments.length >= 2 && !PHONE_RE.test(segments[0])) {
+      const phone = normalizePhone(segments.find((p) => PHONE_RE.test(p)) || segments[1]);
+      const name =
+        segments.find((p) => !PHONE_RE.test(p) && normalizePhone(p) !== phone) || segments[0];
+      if (phone) {
+        contacts.push({ name: String(name || "").trim(), phoneNumber: phone });
+      }
       continue;
     }
-    const phone = normalizePhone(parts[0] || line);
-    if (phone) contacts.push({ name: "", phoneNumber: phone });
+
+    for (const segment of segments.length ? segments : [line]) {
+      const contact = parseContactSegment(segment);
+      if (contact) contacts.push(contact);
+    }
   }
   return contacts;
 }
@@ -185,7 +211,7 @@ export async function addContactsToCampaign(campaignId, contacts = []) {
   return { added: toInsert.length, skipped: unique.size - toInsert.length, stats };
 }
 
-export async function parseContactsFromManualText(text) {
+export function parseContactsFromManualText(text) {
   return parseManualContacts(text);
 }
 

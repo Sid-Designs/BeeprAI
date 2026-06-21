@@ -63,7 +63,10 @@ export function useLiveCallPolling(
       } catch (err) {
         if (cancelled) return;
         const message = (err as Error).message || "Failed to load live call status";
-        setError(message);
+        const isPendingStatus = /not found/i.test(message);
+        if (!isPendingStatus) {
+          setError(message);
+        }
         scheduleNext();
       } finally {
         if (!cancelled) setLoading(false);
