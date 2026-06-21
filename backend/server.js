@@ -48,8 +48,8 @@ const startServer = async () => {
     registerEventWs(server);
     await startQueueWorkers();
 
-    // Start Express Server
-    server.listen(PORT, () => {
+    // Start Express Server (0.0.0.0 required for Railway / container hosts)
+    server.listen(PORT, "0.0.0.0", () => {
       console.log("======================================");
       console.log(`🚀 Server running in ${NODE_ENV} mode`);
       console.log(`🗄️  MongoDB Connected Successfully`);
