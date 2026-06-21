@@ -78,7 +78,7 @@ export function StatsBar() {
               </span>
               <p className="text-3xl font-semibold tracking-[-0.02em] text-[#0F172A]">
                 {Number.isInteger(stat.value) ? (
-                  <CounterAnimation value={stat.value} suffix={stat.suffix} />
+                  <CounterAnimation value={stat.value} suffix={stat.suffix} animateOnScroll />
                 ) : (
                   `${stat.value}${stat.suffix}`
                 )}

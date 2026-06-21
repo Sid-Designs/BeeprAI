@@ -11,6 +11,7 @@ import {
   subscribeAuthSession,
   subscribeTenantId,
 } from "@/lib/auth";
+import { bootstrapWorkspaceSession } from "@/lib/sessionBootstrap";
 import { CounterAnimation } from "@/components/animations/CounterAnimation";
 import { Card } from "@/components/shared/Card";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -118,45 +119,66 @@ export function OverviewPanel() {
   const [usage, setUsage] = useState<TenantUsage | null>(null);
   const [analytics, setAnalytics] = useState<TenantAnalyticsSummary | null>(null);
   const [agentCount, setAgentCount] = useState(0);
+  const [knowledgeCount, setKnowledgeCount] = useState(0);
   const [platformNumber, setPlatformNumber] = useState("—");
   // A workspace is unusable if the stored id is stale/invalid (the legacy
   // "tenant_demo" case) and fails to load.
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
-    if (!tenantId) return;
     let cancelled = false;
-    api
-      .getTenant(tenantId)
-      .then((response) => {
+
+    const loadOverview = async (resolvedTenantId: string) => {
+      try {
+        const tenantResponse = await api.getTenant(resolvedTenantId);
         if (cancelled) return;
-        setTenant(response.data);
-        setUsage(response.usage ?? null);
-        setPlatformNumber(response.telephony?.defaultCallerNumber || "Not configured");
+        setTenant(tenantResponse.data);
+        setUsage(tenantResponse.usage ?? null);
+        setPlatformNumber(tenantResponse.telephony?.defaultCallerNumber || "Not configured");
         setLoadFailed(false);
-      })
-      .catch(() => {
-        // Treat an unusable workspace id as "needs setup" rather than erroring.
+      } catch {
         if (!cancelled) setLoadFailed(true);
-      });
+      }
 
-    api
-      .getTenantAnalytics(tenantId)
-      .then((response) => {
-        if (!cancelled) setAnalytics(response.data);
-      })
-      .catch(() => {
+      try {
+        const analyticsResponse = await api.getTenantAnalytics(resolvedTenantId);
+        if (!cancelled) setAnalytics(analyticsResponse.data);
+      } catch {
         if (!cancelled) setAnalytics(null);
-      });
+      }
 
-    api
-      .listAgents(tenantId)
-      .then((response) => {
-        if (!cancelled) setAgentCount(response.data?.length ?? 0);
-      })
-      .catch(() => {
-        if (!cancelled) setAgentCount(0);
-      });
+      try {
+        const agentsResponse = await api.listAgents(resolvedTenantId);
+        if (cancelled) return;
+        const agents = agentsResponse.data ?? [];
+        setAgentCount(agents.length);
+
+        if (agents[0]?._id) {
+          try {
+            const kbResponse = await api.listKbDocuments(resolvedTenantId, agents[0]._id);
+            if (!cancelled) setKnowledgeCount(kbResponse.data?.length ?? 0);
+          } catch {
+            if (!cancelled) setKnowledgeCount(0);
+          }
+        } else if (!cancelled) {
+          setKnowledgeCount(0);
+        }
+      } catch {
+        if (!cancelled) {
+          setAgentCount(0);
+          setKnowledgeCount(0);
+        }
+      }
+    };
+
+    void (async () => {
+      await bootstrapWorkspaceSession();
+      if (cancelled) return;
+      const resolvedTenantId = getTenantIdSnapshot();
+      if (!resolvedTenantId) return;
+      await loadOverview(resolvedTenantId);
+    })();
+
     return () => {
       cancelled = true;
     };
@@ -202,6 +224,8 @@ export function OverviewPanel() {
     analytics?.activeAgents ?? 0,
     agentCount,
   );
+  const callsToday = analytics?.callsToday ?? 0;
+  const knowledgeSources = Math.max(analytics?.knowledgeSourceCount ?? 0, knowledgeCount);
   const agentsMax = usage?.usageLimits?.maxAgents ?? 0;
   const callsPct = callsMax > 0 ? Math.min(100, Math.round((callsUsed / callsMax) * 100)) : 0;
   const agentsPct = agentsMax > 0 ? Math.min(100, Math.round((agentsUsed / agentsMax) * 100)) : 0;
@@ -233,7 +257,7 @@ export function OverviewPanel() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Calls Today"
-          value={<CounterAnimation value={analytics?.callsToday ?? 0} />}
+          value={<CounterAnimation value={callsToday} />}
           icon={icons.calls}
           subtitle="Your workspace"
         />
@@ -251,7 +275,7 @@ export function OverviewPanel() {
         />
         <StatCard
           title="Knowledge Sources"
-          value={<CounterAnimation value={analytics?.knowledgeSourceCount ?? 0} />}
+          value={<CounterAnimation value={knowledgeSources} />}
           icon={icons.knowledge}
           subtitle="Your workspace"
         />
