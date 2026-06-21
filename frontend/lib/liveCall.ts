@@ -1,4 +1,4 @@
-import { formatSnakeCase } from "./callDetail.ts";
+import { formatSnakeCase } from "./callDetail";
 
 export const DEFAULT_LIVE_CALL_POLL_INTERVAL_MS = 3000;
 

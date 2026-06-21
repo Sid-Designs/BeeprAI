@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
-import { Input, Label } from "@/components/ui/Input";
+import { Input, Label, Textarea } from "@/components/ui/Input";
 import { cn } from "@/lib/cn";
 import { KbTextPrepareFlow } from "@/components/knowledge/KbTextPrepareFlow";
 import type { Agent, Tenant } from "@/lib/types";
