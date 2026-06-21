@@ -1,0 +1,344 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --surface: #f8fafc;
+  --primary: #2563eb;
+  --success: #10b981;
+  --danger: #ef4444;
+  --border: #e2e8f0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-display), system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbars everywhere (no initial flash) */
+*,
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+/* ---------- Decorative backgrounds ---------- */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.bg-grid-fade {
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 78%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 78%);
+}
+
+.bg-dots {
+  background-image: radial-gradient(rgba(37, 99, 235, 0.14) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ---------- Gradient text ---------- */
+.text-gradient {
+  background: linear-gradient(110deg, #2563eb 0%, #3b82f6 40%, #38bdf8 70%, #6366f1 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-pan 6s ease-in-out infinite;
+}
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+}
+
+/* ---------- Aurora blobs ---------- */
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(28px, -22px, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-22px, 18px, 0) scale(0.95);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-aurora {
+  animation: aurora-drift 14s ease-in-out infinite;
+}
+
+.animate-aurora-slow {
+  animation: aurora-drift 20s ease-in-out infinite reverse;
+}
+
+/* ---------- Interactive spotlight card ---------- */
+.spotlight-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    340px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(37, 99, 235, 0.14),
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+.spotlight-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Scroll progress ---------- */
+.scroll-progress {
+  transform-origin: 0% 50%;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, #2563eb, #38bdf8, #6366f1);
+}
+
+/* ---------- Shimmer / shine sweep ---------- */
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 70%
+  );
+  transition: transform 0.7s ease;
+  pointer-events: none;
+}
+
+.shine:hover::after {
+  transform: translateX(120%);
+}
+
+/* ---------- Marquee edge fade ---------- */
+.marquee-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+}
+
+/* ---------- Heading underline accent ---------- */
+.accent-line {
+  height: 3px;
+  width: 56px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+}
+
+/* ---------- Auth entrance (plays on every auth route mount) ---------- */
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-rise-card {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-reveal {
+  opacity: 0;
+  animation: auth-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.auth-reveal-card {
+  opacity: 0;
+  animation: auth-rise-card 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ---------- Dashboard content transition (panel swap) ---------- */
+@keyframes dash-fade {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.dash-enter {
+  animation: dash-fade 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.select-drop {
+  animation: select-drop 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.select-drop::-webkit-scrollbar {
+  width: 6px;
+}
+
+.select-drop::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.select-drop::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@keyframes select-drop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ---------- Onboarding step transition ---------- */
+@keyframes onboarding-fade {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.onboarding-enter {
+  animation: onboarding-fade 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ---------- Connected page link hover ---------- */
+.link-connected {
+  transition: color 0.2s ease, gap 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .hero-wave-bar {
+    transform: scaleY(0.65) !important;
+  }
+
+  .text-gradient,
+  .animate-aurora,
+  .animate-aurora-slow {
+    animation: none !important;
+  }
+
+  .auth-reveal,
+  .auth-reveal-card,
+  .dash-enter,
+  .onboarding-enter,
+  .select-drop {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
